@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 
 	"github.com/gofiber/fiber"
 )
@@ -20,6 +21,34 @@ func main() {
 		// navigate to => http://localhost:3000/
 	})
 
+	app.Get("/", func(c *fiber.Ctx) {
+		fmt.Println("1st route!")
+		c.Append("Link", "http://google.com", "http://localhost")
+		// => Link: http://localhost, http://google.com
+		c.Append("Link", "Test")
+		// => Link: http://localhost, http://google.com, Test
+		c.Next()
+	})
+
+	// curl -X POST http://localhost:8080 -d user=john
+
+	app.Post("/", func(c *fiber.Ctx) {
+		// Get raw body from POST request:
+		c.Body() // user=john
+		fmt.Println(c.Body()) // user=john
+	})
+
+	app.Get("*", func(c *fiber.Ctx) {
+		fmt.Println("2nd route!")
+		c.Next(fmt.Errorf("Some error"))
+	})
+
+	app.Get("/", func(c *fiber.Ctx) {
+		fmt.Println(c.Error()) // => "Some error"
+		fmt.Println("3rd route!")
+		c.Send("Hello, World!")
+	})
+
 	// Load static files like CSS, Images & JavaScript
 	app.Static("/public", "./public")
 
@@ -35,6 +64,18 @@ func main() {
 	app.Get("/parameter/:value", func(c *fiber.Ctx) {
 		c.Send("Get request with value: " + c.Params("value"))
 		// navigate to => http://localhost:3000/parameter/this_is_the_parameter
+	})
+
+	// GET /john
+	app.Get("/:name/:age?", func(c *fiber.Ctx) {
+		fmt.Printf("Name: %s, Age: %s", c.Params("name"), c.Params("age"))
+		// => Name: john, Age:
+	})
+
+	// GET /flights/LAX-SFO
+	app.Get("/flights/:from-:to", func(c *fiber.Ctx) {
+		fmt.Printf("From: %s, To: %s", c.Params("from"), c.Params("to"))
+		// => From: LAX, To: SFO
 	})
 
 	// Use wildcards to design your API.
